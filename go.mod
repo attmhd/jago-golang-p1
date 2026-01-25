@@ -1,6 +1,6 @@
 module simple-crud
 
-go 1.25.5
+go 1.25
 
 require (
 	github.com/PeterTakahashi/gin-openapi v0.1.0 // indirect
