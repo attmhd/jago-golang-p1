@@ -1,42 +1,46 @@
 package service
 
 import (
-	"simple-crud/model"
+	model "simple-crud/models"
 	"simple-crud/repository"
 )
 
-type CategoryService interface {
-	GetAll() []model.Category
-	GetByID(id int) (model.Category, error)
+type CategoriesService interface {
+	GetAll() ([]model.Category, error)
+	GetByID(id int) (*model.Category, error)
 	Create(category model.Category) model.Category
 	Update(id int, category model.Category) error
 	Delete(id int) error
 }
 
-type categoryService struct {
+type CategoryService struct {
 	repo repository.CategoryRepository
 }
 
-func NewCategoryService(repo repository.CategoryRepository) CategoryService {
-	return &categoryService{repo}
+func NewCategoryService(repo repository.CategoryRepository) *CategoryService {
+	return &CategoryService{repo: repo}
 }
 
-func (s *categoryService) GetAll() []model.Category {
-	return s.repo.GetAllCategories()
+func (s *CategoryService) GetAll() ([]model.Category, error) {
+	return s.repo.GetAll()
 }
 
-func (s *categoryService) GetByID(id int) (model.Category, error) {
-	return s.repo.GetCategoryByID(id)
+func (s *CategoryService) GetByID(id int) (*model.Category, error) {
+	return s.repo.GetByID(id)
 }
 
-func (s *categoryService) Create(category model.Category) model.Category {
-	return s.repo.CreateCategory(category)
+func (s *CategoryService) Create(category model.Category) (model.Category, error) {
+	c, err := s.repo.Create(category)
+	if err != nil {
+		return model.Category{}, err
+	}
+	return *c, nil
 }
 
-func (s *categoryService) Update(id int, category model.Category) error {
-	return s.repo.UpdateCategory(id, category)
+func (s *CategoryService) Update(id int, category model.Category) error {
+	return s.repo.Update(id, category)
 }
 
-func (s *categoryService) Delete(id int) error {
-	return s.repo.DeleteCategory(id)
+func (s *CategoryService) Delete(id int) error {
+	return s.repo.Delete(id)
 }

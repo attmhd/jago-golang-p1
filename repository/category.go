@@ -1,66 +1,100 @@
 package repository
 
 import (
+	"database/sql"
 	"errors"
-	"simple-crud/model"
+	model "simple-crud/models"
 )
 
-type CategoryRepository interface {
-	GetAllCategories() []model.Category
-	GetCategoryByID(id int) (model.Category, error)
-	CreateCategory(c model.Category) model.Category
-	UpdateCategory(id int, c model.Category) error
-	DeleteCategory(id int) error
+type CategoriesRepository interface {
+	GetAll() ([]model.Category, error)
+	GetByID(id int) (*model.Category, error)
+	Create(c model.Category) (*model.Category, error)
+	Update(id int, c model.Category) error
+	Delete(id int) error
 }
 
-type categoryRepository struct {
-	categories []model.Category
+type CategoryRepository struct {
+	db *sql.DB
 }
 
-func NewCategoryRepository() CategoryRepository {
-	return &categoryRepository{
-		categories: []model.Category{
-			{ID: 1, Name: "Electronics"},
-			{ID: 2, Name: "Clothing"},
-			{ID: 3, Name: "Books"},
-		},
+func NewCategoryRepository(db *sql.DB) *CategoryRepository {
+	return &CategoryRepository{
+		db: db,
 	}
 }
 
-func (r *categoryRepository) GetAllCategories() []model.Category {
-	return r.categories
-}
+func (r *CategoryRepository) GetAll() ([]model.Category, error) {
+	query := "SELECT id, name, description FROM categories"
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-func (r *categoryRepository) GetCategoryByID(id int) (model.Category, error) {
-	for _, c := range r.categories {
-		if c.ID == id {
-			return c, nil
+	categories := make([]model.Category, 0)
+	for rows.Next() {
+		var c model.Category
+		if err := rows.Scan(&c.ID, &c.Name, &c.Description); err != nil {
+			return nil, err
 		}
+		categories = append(categories, c)
 	}
-	return model.Category{}, errors.New("category not found")
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return categories, nil
 }
 
-func (r *categoryRepository) CreateCategory(c model.Category) model.Category {
-	r.categories = append(r.categories, c)
-	return c
-}
-
-func (r *categoryRepository) UpdateCategory(id int, c model.Category) error {
-	for i, category := range r.categories {
-		if category.ID == id {
-			r.categories[i] = c
-			return nil
+func (r *CategoryRepository) GetByID(id int) (*model.Category, error) {
+	query := "SELECT id, name, description FROM categories WHERE id = $1"
+	var c model.Category
+	err := r.db.QueryRow(query, id).Scan(&c.ID, &c.Name, &c.Description)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("Kategori tidak ditemukan")
 		}
+		return nil, err
 	}
-	return errors.New("category not found")
+	return &c, nil
 }
 
-func (r *categoryRepository) DeleteCategory(id int) error {
-	for i, category := range r.categories {
-		if category.ID == id {
-			r.categories = append(r.categories[:i], r.categories[i+1:]...)
-			return nil
-		}
+func (r *CategoryRepository) Create(c model.Category) (*model.Category, error) {
+	query := "INSERT INTO categories (name, description) VALUES ($1, $2) RETURNING id"
+	var id int
+	err := r.db.QueryRow(query, c.Name, c.Description).Scan(&id)
+	if err != nil {
+		return nil, err
 	}
-	return errors.New("category not found")
+
+	c.ID = id
+	return &c, nil
+}
+
+func (r *CategoryRepository) Update(id int, c model.Category) error {
+	query := "UPDATE categories SET name = $1, description = $2 WHERE id = $3"
+	result, err := r.db.Exec(query, c.Name, c.Description, id)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.New("Kategori tidak ditemukan")
+	}
+
+	return nil
+}
+
+func (r *CategoryRepository) Delete(id int) error {
+	query := "DELETE FROM categories WHERE id = $1"
+	_, err := r.db.Exec(query, id)
+	return err
 }

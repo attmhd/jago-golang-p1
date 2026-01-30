@@ -1,7 +1,10 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"simple-crud/config"
+	"simple-crud/database"
 	"simple-crud/handler"
 	"simple-crud/repository"
 	"simple-crud/service"
@@ -12,23 +15,33 @@ import (
 
 func main() {
 
-	repo := repository.NewCategoryRepository()
-	svc := service.NewCategoryService(repo)
-	h := handler.NewCategoryHandler(svc)
+	config := config.Load()
+
+	db, err := database.InitDB(config.DBConn)
+	if err != nil {
+		log.Fatal("Failed to initialize database : ", err)
+	}
+
+	defer db.Close()
+
+	categoryRepo := repository.NewCategoryRepository(db)
+	categoryService := service.NewCategoryService(*categoryRepo)
+	categoryHandler := handler.NewCategoryHandler(*categoryService)
 
 	router := gin.Default()
 
 	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+		c.Header("Content-Type", "application/json")
+		c.JSON(http.StatusOK, gin.H{"status": "ok", "message": "Health check successful"})
 	})
 
 	cat := router.Group("/categories")
 	{
-		cat.GET("", h.GetAll)
-		cat.GET("/:id", h.GetByID)
-		cat.POST("", h.Create)
-		cat.PUT("/:id", h.Update)
-		cat.DELETE("/:id", h.Delete)
+		cat.GET("", categoryHandler.GetAll)
+		cat.GET("/:id", categoryHandler.GetByID)
+		cat.POST("", categoryHandler.Create)
+		cat.PUT("/:id", categoryHandler.Update)
+		cat.DELETE("/:id", categoryHandler.Delete)
 	}
 
 	router.GET("/", func(c *gin.Context) {
@@ -42,5 +55,5 @@ func main() {
 		Theme:        "light", // or "dark"
 	}))
 
-	router.Run(":8080")
+	router.Run(":" + config.Port)
 }
