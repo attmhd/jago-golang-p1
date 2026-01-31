@@ -1,83 +1,110 @@
-# Simple CRUD - Pertemuan 1
+# Simple CRUD - Pertemuan 2
 
-Proyek ini adalah aplikasi sederhana CRUD kategori menggunakan Gin (web framework), dengan arsitektur terpisah: repository, service, dan handler. Aplikasi berjalan sebagai HTTP server di port 8080.
+Proyek ini adalah aplikasi sederhana CRUD untuk Products dan Categories menggunakan Gin (web framework), dengan arsitektur terpisah: repository, service, dan handler. Aplikasi berjalan sebagai HTTP server di port 8080.
+
+Kini data `products` terhubung dengan `categories` melalui `category_id` dan seluruh response untuk `GET /products`, `GET /products/:id`, `POST /products`, dan `PUT /products/:id` mengembalikan struktur JSON dengan objek `category` yang nested (berisi `id` dan `name`) berdasarkan relasi.
 
 ## Fitur Utama
 
-- CRUD kategori:
+- CRUD Categories:
   - List semua kategori
   - Get kategori by ID
   - Create kategori
   - Update kategori
   - Delete kategori
+- CRUD Products:
+  - List semua produk dengan kategori nested
+  - Get produk by ID dengan kategori nested
+  - Create produk dan kembalikan kategori nested
+  - Update produk dan kembalikan kategori nested
+  - Delete produk
 - Health check endpoint untuk monitoring
 - Struktur kode modular:
-  - `repository` untuk akses data (in-memory array)
+  - `repository` untuk akses data (PostgreSQL via `database/sql`)
   - `service` untuk business logic
   - `handler` untuk HTTP layer (Gin)
-
+  
 ## Struktur Proyek
 
 ```
 pertemuan-1/
   ├─ handler/
-  │  └─ category.go           // HTTP handlers (Gin) untuk kategori
-  ├─ model/
-  │  └─ Category.go           // Definisi struct entity Category (ID, Name)
+  │  ├─ category.go           // HTTP handlers (Gin) untuk kategori
+  │  ├─ product.go            // HTTP handlers (Gin) untuk produk, response nested category
+  │  └─ response.go           // DTO untuk response Product/Category
+  ├─ models/
+  │  ├─ category.go           // Definisi struct entity Category
+  │  └─ product.go            // Definisi struct entity Product (termasuk CategoryID & CategoryName)
   ├─ repository/
-  │  └─ category.go           // Implementasi in-memory repository Category
+  │  ├─ category.go           // Implementasi repository Category (DB)
+  │  └─ product.go            // Implementasi repository Product (DB, JOIN category)
   ├─ service/
-  │  └─ category.go           // Business logic dan interface CategoryService
+  │  ├─ category.go           // Business logic dan interface CategoryService
+  │  └─ product.go            // Business logic dan interface ProductService
   └─ main.go                  // Bootstrap server, wiring repo -> service -> handler, routes
 ```
 
-Catatan:
-- Nama file di `model` diharapkan mendefinisikan `struct` `Category`:
-  - Field minimal: `ID int`, `Name string`
-
 ## Arsitektur dan Alur
 
-1. `repository.CategoryRepository`
-   - Menyediakan operasi data:
-     - `GetAllCategories() []model.Category`
-     - `GetCategoryByID(id int) (model.Category, error)`
-     - `CreateCategory(c model.Category) model.Category`
-     - `UpdateCategory(id int, c model.Category) error`
-     - `DeleteCategory(id int) error`
-   - Implementasi saat ini: in-memory array dengan seed data.
+1. Repository
+   - `repository.ProductRepository`
+     - `GetAll() ([]model.Product, error)` — SELECT dengan JOIN ke `categories` untuk mendapatkan `CategoryName`
+     - `GetByID(id int) (*model.Product, error)` — SELECT dengan JOIN untuk satu produk
+     - `Create(product *model.Product) (*model.Product, error)` — INSERT dengan `RETURNING id`, lalu service akan memanggil `GetByID` untuk melengkapi `CategoryName`
+     - `Update(product *model.Product) error` — UPDATE berdasarkan `id`
+     - `Delete(id int) error` — DELETE berdasarkan `id`
+   - `repository.CategoryRepository` — operasi dasar kategori (GetAll, GetByID, Create, Update, Delete)
 
-2. `service.CategoryService`
-   - Abstraksi business logic:
-     - `GetAll() []model.Category`
-     - `GetByID(id int) (model.Category, error)`
-     - `Create(category model.Category) model.Category`
-     - `Update(id int, category model.Category) error`
+2. Service
+   - `service.ProductService`
+     - `GetAll() ([]model.Product, error)`
+     - `GetByID(id int) (*model.Product, error)`
+     - `Create(product *model.Product) (*model.Product, error)` — setelah insert, fetch lagi dengan `GetByID` agar `CategoryName` terisi
+     - `Update(product *model.Product) (*model.Product, error)` — setelah update, fetch lagi dengan `GetByID` agar `CategoryName` terisi
      - `Delete(id int) error`
-   - Menggunakan `repository.CategoryRepository` di balik layar.
+   - `service.CategoryService` — abstraksi business logic kategori
 
-3. `handler.CategoryHandler`
-   - HTTP endpoints (Gin) yang memanggil `service`:
-     - `GetAll(c *gin.Context)`
-     - `GetByID(c *gin.Context)`
-     - `Create(c *gin.Context)`
-     - `Update(c *gin.Context)`
-     - `Delete(c *gin.Context)`
+3. Handler
+   - `handler.ProductHandler`
+     - Mengubah hasil dari service (model flat) menjadi DTO dengan `category` nested:
+       ```
+       {
+         "message": "Success",
+         "data": [
+           {
+             "id": 1,
+             "name": "Makanan",
+             "price": 10000,
+             "stock": 80,
+             "category": {
+               "id": 1,
+               "name": "Test"
+             }
+           }
+         ]
+       }
+       ```
+     - Struktur response yang sama diterapkan untuk `GetById`, `Create`, dan `Update`
+   - `handler.CategoryHandler` — endpoints dasar kategori
 
 4. `main.go`
    - Inisialisasi:
-     - `repo := repository.NewCategoryRepository()`
-     - `svc := service.NewCategoryService(repo)`
-     - `h := handler.NewCategoryHandler(svc)`
+     - `db` (sql.DB) untuk koneksi PostgreSQL
+     - `repo := repository.NewProductRepository(db)` dan `repository.NewCategoryRepository(db)`
+     - `svc := service.NewProductService(repo)` dan `service.NewCategoryService(repo)`
+     - `h := handler.NewProductHandler(svc)` dan `handler.NewCategoryHandler(svc)`
    - Routing Gin dan server run di `:8080`.
 
 ## Persiapan Lingkungan
 
 - Go 1.20+ (disarankan)
+- Database: PostgreSQL (atau kompatibel dengan sintaks `RETURNING`)
+- `database/sql` dan driver PostgreSQL (mis. `github.com/lib/pq`) di `go.mod`
 - Module path project: `simple-crud` (disesuaikan dengan `import` yang digunakan)
 
-Jika module path berbeda, pastikan `go.mod` sesuai dan import path di file-file:
+Pastikan `go.mod` sesuai dan import path di file-file:
 - `simple-crud/handler`
-- `simple-crud/model`
+- `simple-crud/models`
 - `simple-crud/repository`
 - `simple-crud/service`
 
@@ -105,8 +132,7 @@ Server akan berjalan di `http://localhost:8080`.
     - Body JSON:
       ```
       {
-        "id": 4,            // opsional; jika tidak disediakan, repository saat ini tidak auto-generate, jadi pastikan konsisten
-        "name": "New Cat"   // wajib
+        "name": "New Cat"
       }
       ```
     - Response: `Category` yang dibuat
@@ -118,24 +144,82 @@ Server akan berjalan di `http://localhost:8080`.
         "name": "Updated Name"
       }
       ```
-    - Response: Status `204 No Content` jika sukses, `400/404` jika gagal
+    - Response: `Category` yang diperbarui
   - DELETE `/categories/:id`
     - Params: `id` (int > 0)
-    - Response: Status `204 No Content` jika sukses, `404` jika tidak ditemukan
+    - Response: Status OK jika sukses, `404` jika tidak ditemukan
 
-Contoh curl:
+- Products
+  - GET `/products`
+    - Response: daftar produk dengan kategori nested
+      ```
+      {
+        "message": "Success",
+        "data": [
+          {
+            "id": 1,
+            "name": "Makanan",
+            "price": 10000,
+            "stock": 80,
+            "category": {
+              "id": 1,
+              "name": "Test"
+            }
+          }
+        ]
+      }
+      ```
+  - GET `/products/:id`
+    - Params: `id` (int > 0)
+    - Response: satu produk dengan kategori nested atau `404`
+  - POST `/products`
+    - Body JSON:
+      ```
+      {
+        "category_id": 1,
+        "name": "Minuman",
+        "price": 5000,
+        "stock": 30
+      }
+      ```
+    - Proses: INSERT, lalu service akan `GetByID` untuk melengkapi `category.name`
+    - Response: produk yang dibuat dengan kategori nested
+  - PUT `/products/:id`
+    - Params: `id` (int > 0)
+    - Body JSON:
+      ```
+      {
+        "category_id": 2,
+        "name": "Minuman Segar",
+        "price": 6000,
+        "stock": 40
+      }
+      ```
+    - Proses: UPDATE, lalu service akan `GetByID` untuk melengkapi `category.name`
+    - Response: produk yang diperbarui dengan kategori nested
+  - DELETE `/products/:id`
+    - Params: `id` (int > 0)
+    - Response: Status OK jika sukses, `404` jika tidak ditemukan
 
-- List categories
-  - `curl -s http://localhost:8080/categories | jq`
+## Contoh curl
 
-- Get by id
-  - `curl -s http://localhost:8080/categories/1 | jq`
+- List products
+  - `curl -s http://localhost:8080/products | jq`
 
-- Create
-  - `curl -s -X POST http://localhost:8080/categories -H "Content-Type: application/json" -d '{"id":4,"name":"Sports"}' | jq`
+- Get product by id
+  - `curl -s http://localhost:8080/products/1 | jq`
 
-- Update
-  - `curl -s -X PUT http://localhost:8080/categories/4 -H "Content-Type: application/json" -d '{"name":"Outdoors"}' -w " HTTP %{http_code}\n"`
+- Create product
+  - `curl -s -X POST http://localhost:8080/products -H "Content-Type: application/json" -d '{"category_id":1,"name":"Minuman","price":5000,"stock":30}' | jq`
 
-- Delete
-  - `curl -s -X DELETE http://localhost:8080/categories/4 -w " HTTP %{http_code}\n"`
+- Update product
+  - `curl -s -X PUT http://localhost:8080/products/1 -H "Content-Type: application/json" -d '{"category_id":2,"name":"Minuman Segar","price":6000,"stock":40}' | jq`
+
+- Delete product
+  - `curl -s -X DELETE http://localhost:8080/products/1 -w " HTTP %{http_code}\n"`
+
+## Catatan
+
+- Pastikan `categories` berisi data yang valid sebelum membuat `products`, karena `category_id` harus merujuk ke `categories.id`.
+- Implementasi repository `products` menggunakan JOIN untuk mengisi `CategoryName`. Service `Create` dan `Update` akan memanggil `GetByID` setelah operasi tulis untuk memastikan respons memiliki `category.name` yang benar.
+- Jika database bukan PostgreSQL, sesuaikan cara mendapatkan `ID` hasil insert (misalnya dengan `LastInsertId()` jika driver mendukung).

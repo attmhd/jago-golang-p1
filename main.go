@@ -13,6 +13,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// @title Simple CRUD API
+// @version 1.0
+// @description REST API for product and category
+// @host localhost:8080
+// @BasePath /
 func main() {
 
 	config := config.Load()
@@ -28,7 +33,22 @@ func main() {
 	categoryService := service.NewCategoryService(*categoryRepo)
 	categoryHandler := handler.NewCategoryHandler(*categoryService)
 
+	productRepo := repository.NewProductRepository(db)
+	productService := service.NewProductService(*productRepo)
+	productHandler := handler.NewProductHandler(*productService)
+
 	router := gin.Default()
+
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "Welcome to the Simple CRUD API"})
+	})
+
+	router.GET("/docs/*any", openapiui.WrapHandler(openapiui.Config{
+		SpecURL:      "/docs/openapi.json",
+		SpecFilePath: "./docs/swagger.json",
+		Title:        "Example API",
+		Theme:        "light", // or "dark"
+	}))
 
 	router.GET("/health", func(c *gin.Context) {
 		c.Header("Content-Type", "application/json")
@@ -44,16 +64,14 @@ func main() {
 		cat.DELETE("/:id", categoryHandler.Delete)
 	}
 
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "Welcome to the Simple CRUD API"})
-	})
-
-	router.GET("/docs/*any", openapiui.WrapHandler(openapiui.Config{
-		SpecURL:      "/docs/openapi.json",
-		SpecFilePath: "./docs/swagger.json",
-		Title:        "Example API",
-		Theme:        "light", // or "dark"
-	}))
+	product := router.Group("/products")
+	{
+		product.GET("", productHandler.GetAll)
+		product.GET("/:id", productHandler.GetById)
+		product.POST("", productHandler.Create)
+		product.PUT("/:id", productHandler.Update)
+		product.DELETE("/:id", productHandler.Delete)
+	}
 
 	router.Run(":" + config.Port)
 }

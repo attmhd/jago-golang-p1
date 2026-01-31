@@ -1,4 +1,353 @@
+basePath: /
+definitions:
+  handler.Category:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handler.JSONResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
+  handler.ProductResp:
+    properties:
+      category:
+        $ref: '#/definitions/handler.Category'
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      stock:
+        type: integer
+    type: object
+  model.Category:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  model.Product:
+    properties:
+      category_id:
+        type: integer
+      category_name:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      stock:
+        type: integer
+    type: object
+host: localhost:8080
 info:
   contact: {}
-paths: {}
+  description: REST API for product and category
+  title: Simple CRUD API
+  version: "1.0"
+paths:
+  /categories:
+    get:
+      description: Retrieve all categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.JSONResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.Category'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+      summary: Get all categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Create a new category
+      parameters:
+      - description: Category payload
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/model.Category'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.JSONResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Category'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+      summary: Create new category
+      tags:
+      - categories
+  /categories/{id}:
+    delete:
+      description: Delete category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+      summary: Delete category
+      tags:
+      - categories
+    get:
+      description: Get category detail by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.JSONResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.Category'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+      summary: Get category by ID
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      description: Update category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Category payload
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/model.Category'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+      summary: Update category
+      tags:
+      - categories
+  /products:
+    get:
+      description: Get list of products with category
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.JSONResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/handler.ProductResp'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+      summary: Get all products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Create new product
+      parameters:
+      - description: Product payload
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/model.Product'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.JSONResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.ProductResp'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+      summary: Create product
+      tags:
+      - products
+  /products/{id}:
+    delete:
+      description: Delete product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+      summary: Delete product
+      tags:
+      - products
+    get:
+      description: Get product detail with category
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.JSONResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.ProductResp'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+      summary: Get product by ID
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Update product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Product payload
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/model.Product'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.JSONResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/handler.ProductResp'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.JSONResponse'
+      summary: Update product
+      tags:
+      - products
 swagger: "2.0"
