@@ -3,11 +3,14 @@ package main
 import (
 	"log"
 	"net/http"
+
 	"simple-crud/config"
 	"simple-crud/database"
 	"simple-crud/handler"
 	"simple-crud/repository"
 	"simple-crud/service"
+
+	_ "simple-crud/docs"
 
 	"github.com/PeterTakahashi/gin-openapi/openapiui"
 	"github.com/gin-gonic/gin"
@@ -16,19 +19,18 @@ import (
 // @title Simple CRUD API
 // @version 1.0
 // @description REST API for product and category
-// @host localhost:8080
 // @BasePath /
 func main() {
 
-	config := config.Load()
+	cfg := config.Load()
 
-	db, err := database.InitDB(config.DBConn)
+	db, err := database.InitDB(cfg.DBConn)
 	if err != nil {
-		log.Fatal("Failed to initialize database : ", err)
+		log.Fatal("Failed to initialize database:", err)
 	}
-
 	defer db.Close()
 
+	// === Dependency Injection ===
 	categoryRepo := repository.NewCategoryRepository(db)
 	categoryService := service.NewCategoryService(*categoryRepo)
 	categoryHandler := handler.NewCategoryHandler(*categoryService)
@@ -37,23 +39,32 @@ func main() {
 	productService := service.NewProductService(*productRepo)
 	productHandler := handler.NewProductHandler(*productService)
 
+	// === Gin Router ===
 	router := gin.Default()
 
+	// Root
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Welcome to the Simple CRUD API"})
 	})
 
+	// Healthcheck
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
+	// EXPOSE swagger.json via HTTP (ini yang dibaca Scalar)
+	router.GET("/docs/openapi.json", func(c *gin.Context) {
+		c.File("./docs/swagger.json")
+	})
+
+	// Scalar UI
 	router.GET("/docs/*any", openapiui.WrapHandler(openapiui.Config{
-		SpecURL:      "/docs/openapi.json",
-		SpecFilePath: "./docs/swagger.json",
-		Title:        "Example API",
-		Theme:        "light", // or "dark"
+		SpecURL: "/docs/openapi.json",
+		Title:   "Simple CRUD API",
+		Theme:   "light",
 	}))
 
-	router.GET("/health", func(c *gin.Context) {
-		c.Header("Content-Type", "application/json")
-		c.JSON(http.StatusOK, gin.H{"status": "ok", "message": "Health check successful"})
-	})
+	// === Routes ===
 
 	cat := router.Group("/categories")
 	{
@@ -73,5 +84,6 @@ func main() {
 		product.DELETE("/:id", productHandler.Delete)
 	}
 
-	router.Run(":" + config.Port)
+	log.Println("Server running on port", cfg.Port)
+	router.Run(":" + cfg.Port)
 }
