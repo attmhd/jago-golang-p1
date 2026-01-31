@@ -53,13 +53,13 @@ func main() {
 	})
 
 	// EXPOSE swagger.json via HTTP (ini yang dibaca Scalar)
-	router.GET("/docs/openapi.json", func(c *gin.Context) {
+	router.GET("/openapi.json", func(c *gin.Context) {
 		c.File("./docs/swagger.json")
 	})
 
 	// Scalar UI
 	router.GET("/docs/*any", openapiui.WrapHandler(openapiui.Config{
-		SpecURL: "/docs/openapi.json",
+		SpecURL: "/openapi.json",
 		Title:   "Simple CRUD API",
 		Theme:   "light",
 	}))
