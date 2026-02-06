@@ -6,7 +6,7 @@ import (
 )
 
 type ProductRepositories interface {
-	GetAll() ([]model.Product, error)
+	GetAll(name string) ([]model.Product, error)
 	GetByID(id int) (*model.Product, error)
 	Create(product *model.Product) (*model.Product, error)
 	Update(product *model.Product) error
@@ -23,7 +23,7 @@ func NewProductRepository(db *sql.DB) *ProductRepository {
 	}
 }
 
-func (r *ProductRepository) GetAll() ([]model.Product, error) {
+func (r *ProductRepository) GetAll(name string) ([]model.Product, error) {
 	query := `
 	SELECT
 		p.id,
@@ -34,9 +34,19 @@ func (r *ProductRepository) GetAll() ([]model.Product, error) {
 		p.stock
 	FROM products p
 	JOIN categories c
-		ON p.category_id = c.id;
+		ON p.category_id = c.id
 `
-	rows, err := r.db.Query(query)
+
+	args := []interface{}{}
+	if name != "" {
+		query += " WHERE p.name ILIKE $1"
+		args = append(args, "%"+name+"%")
+	}
+
+	// terminate query after optional WHERE
+	query += ";"
+
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

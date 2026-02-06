@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -33,7 +34,9 @@ func NewProductHandler(svc service.ProductService) *ProductHandler {
 // @Failure 500 {object} JSONResponse
 // @Router /products [get]
 func (h *ProductHandler) GetAll(c *gin.Context) {
-	products, err := h.service.GetAll()
+	name := c.Request.URL.Query().Get("name")
+	fmt.Println(name)
+	products, err := h.service.GetAll(name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, JSONResponse{
 			Message: "Internal Server Error",

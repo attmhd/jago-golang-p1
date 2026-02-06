@@ -65,23 +65,25 @@ func main() {
 	}))
 
 	// === Routes ===
-
-	cat := router.Group("/categories")
+	api := router.Group("/api/v1")
 	{
-		cat.GET("", categoryHandler.GetAll)
-		cat.GET("/:id", categoryHandler.GetByID)
-		cat.POST("", categoryHandler.Create)
-		cat.PUT("/:id", categoryHandler.Update)
-		cat.DELETE("/:id", categoryHandler.Delete)
-	}
+		cat := api.Group("/categories")
+		{
+			cat.GET("", categoryHandler.GetAll)
+			cat.GET("/:id", categoryHandler.GetByID)
+			cat.POST("", categoryHandler.Create)
+			cat.PUT("/:id", categoryHandler.Update)
+			cat.DELETE("/:id", categoryHandler.Delete)
+		}
 
-	product := router.Group("/products")
-	{
-		product.GET("", productHandler.GetAll)
-		product.GET("/:id", productHandler.GetById)
-		product.POST("", productHandler.Create)
-		product.PUT("/:id", productHandler.Update)
-		product.DELETE("/:id", productHandler.Delete)
+		product := api.Group("/products")
+		{
+			product.GET("", productHandler.GetAll)
+			product.GET("/:id", productHandler.GetById)
+			product.POST("", productHandler.Create)
+			product.PUT("/:id", productHandler.Update)
+			product.DELETE("/:id", productHandler.Delete)
+		}
 	}
 
 	log.Println("Server running on port", cfg.Port)
