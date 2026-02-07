@@ -6,6 +6,7 @@ import (
 
 	model "simple-crud/models"
 	"simple-crud/service"
+	"simple-crud/util"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,19 +28,19 @@ func NewCategoryHandler(svc service.CategoryService) *CategoryHandler {
 // @Description Retrieve all categories
 // @Tags categories
 // @Produce json
-// @Success 200 {object} JSONResponse{data=[]model.Category}
-// @Failure 500 {object} JSONResponse
-// @Router /categories [get]
+// @Success 200 {object} util.JSONResponse{data=[]model.Category}
+// @Failure 500 {object} util.JSONResponse
+// @Router /api/v1/categories [get]
 func (h *CategoryHandler) GetAll(c *gin.Context) {
 	categories, err := h.service.GetAll()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, JSONResponse{
+		c.JSON(http.StatusInternalServerError, util.JSONResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
 		return
 	}
-	c.JSON(http.StatusOK, JSONResponse{
+	c.JSON(http.StatusOK, util.JSONResponse{
 		Message: "categories retrieved",
 		Data:    categories,
 	})
@@ -55,15 +56,15 @@ func (h *CategoryHandler) GetAll(c *gin.Context) {
 // @Tags categories
 // @Produce json
 // @Param id path int true "Category ID"
-// @Success 200 {object} JSONResponse{data=model.Category}
-// @Failure 400 {object} JSONResponse
-// @Failure 404 {object} JSONResponse
-// @Router /categories/{id} [get]
+// @Success 200 {object} util.JSONResponse{data=model.Category}
+// @Failure 400 {object} util.JSONResponse
+// @Failure 404 {object} util.JSONResponse
+// @Router /api/v1/categories/{id} [get]
 func (h *CategoryHandler) GetByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: "invalid id",
 			Data:    nil,
 		})
@@ -72,14 +73,14 @@ func (h *CategoryHandler) GetByID(c *gin.Context) {
 
 	category, err := h.service.GetByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, JSONResponse{
+		c.JSON(http.StatusNotFound, util.JSONResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, JSONResponse{
+	c.JSON(http.StatusOK, util.JSONResponse{
 		Message: "category retrieved",
 		Data:    category,
 	})
@@ -96,13 +97,13 @@ func (h *CategoryHandler) GetByID(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param category body model.Category true "Category payload"
-// @Success 201 {object} JSONResponse{data=model.Category}
-// @Failure 400 {object} JSONResponse
-// @Router /categories [post]
+// @Success 201 {object} util.JSONResponse{data=model.Category}
+// @Failure 400 {object} util.JSONResponse
+// @Router /api/v1/categories [post]
 func (h *CategoryHandler) Create(c *gin.Context) {
 	var payload model.Category
 	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
@@ -111,14 +112,14 @@ func (h *CategoryHandler) Create(c *gin.Context) {
 
 	created, err := h.service.Create(payload)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, JSONResponse{
+	c.JSON(http.StatusCreated, util.JSONResponse{
 		Message: "category created",
 		Data:    created,
 	})
@@ -136,14 +137,14 @@ func (h *CategoryHandler) Create(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Category ID"
 // @Param category body model.Category true "Category payload"
-// @Success 200 {object} JSONResponse
-// @Failure 400 {object} JSONResponse
-// @Router /categories/{id} [put]
+// @Success 200 {object} util.JSONResponse
+// @Failure 400 {object} util.JSONResponse
+// @Router /api/v1/categories/{id} [put]
 func (h *CategoryHandler) Update(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: "invalid id",
 			Data:    nil,
 		})
@@ -152,7 +153,7 @@ func (h *CategoryHandler) Update(c *gin.Context) {
 
 	var payload model.Category
 	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
@@ -160,14 +161,14 @@ func (h *CategoryHandler) Update(c *gin.Context) {
 	}
 
 	if err := h.service.Update(id, payload); err != nil {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, JSONResponse{
+	c.JSON(http.StatusOK, util.JSONResponse{
 		Message: "category updated",
 		Data: gin.H{
 			"id":       id,
@@ -186,14 +187,14 @@ func (h *CategoryHandler) Update(c *gin.Context) {
 // @Tags categories
 // @Produce json
 // @Param id path int true "Category ID"
-// @Success 200 {object} JSONResponse
-// @Failure 400 {object} JSONResponse
-// @Router /categories/{id} [delete]
+// @Success 200 {object} util.JSONResponse
+// @Failure 400 {object} util.JSONResponse
+// @Router /api/v1/categories/{id} [delete]
 func (h *CategoryHandler) Delete(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: "invalid id",
 			Data:    nil,
 		})
@@ -201,14 +202,14 @@ func (h *CategoryHandler) Delete(c *gin.Context) {
 	}
 
 	if err := h.service.Delete(id); err != nil {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, JSONResponse{
+	c.JSON(http.StatusOK, util.JSONResponse{
 		Message: "category deleted",
 		Data: gin.H{
 			"id": id,

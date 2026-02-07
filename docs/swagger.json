@@ -6,10 +6,9 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
-        "/categories": {
+        "/api/v1/categories": {
             "get": {
                 "description": "Retrieve all categories",
                 "produces": [
@@ -25,7 +24,7 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.JSONResponse"
+                                    "$ref": "#/definitions/util.JSONResponse"
                                 },
                                 {
                                     "type": "object",
@@ -33,7 +32,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/model.Category"
+                                                "$ref": "#/definitions/models.Category"
                                             }
                                         }
                                     }
@@ -44,7 +43,7 @@
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     }
                 }
@@ -68,7 +67,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Category"
+                            "$ref": "#/definitions/models.Category"
                         }
                     }
                 ],
@@ -78,13 +77,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.JSONResponse"
+                                    "$ref": "#/definitions/util.JSONResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.Category"
+                                            "$ref": "#/definitions/models.Category"
                                         }
                                     }
                                 }
@@ -94,13 +93,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     }
                 }
             }
         },
-        "/categories/{id}": {
+        "/api/v1/categories/{id}": {
             "get": {
                 "description": "Get category detail by ID",
                 "produces": [
@@ -125,13 +124,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.JSONResponse"
+                                    "$ref": "#/definitions/util.JSONResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/model.Category"
+                                            "$ref": "#/definitions/models.Category"
                                         }
                                     }
                                 }
@@ -141,13 +140,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     }
                 }
@@ -178,7 +177,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Category"
+                            "$ref": "#/definitions/models.Category"
                         }
                     }
                 ],
@@ -186,13 +185,13 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     }
                 }
@@ -219,19 +218,71 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     }
                 }
             }
         },
-        "/products": {
+        "/api/v1/checkout": {
+            "post": {
+                "description": "Create transaction from cart items and update product stock",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Checkout transaction",
+                "parameters": [
+                    {
+                        "description": "Checkout payload",
+                        "name": "checkout",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CheckoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.Transaction"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/products": {
             "get": {
                 "description": "Get list of products with category",
                 "produces": [
@@ -247,7 +298,7 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.JSONResponse"
+                                    "$ref": "#/definitions/util.JSONResponse"
                                 },
                                 {
                                     "type": "object",
@@ -255,7 +306,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/handler.ProductResp"
+                                                "$ref": "#/definitions/util.ProductResp"
                                             }
                                         }
                                     }
@@ -266,7 +317,7 @@
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     }
                 }
@@ -290,7 +341,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Product"
+                            "$ref": "#/definitions/models.Product"
                         }
                     }
                 ],
@@ -300,13 +351,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.JSONResponse"
+                                    "$ref": "#/definitions/util.JSONResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.ProductResp"
+                                            "$ref": "#/definitions/util.ProductResp"
                                         }
                                     }
                                 }
@@ -316,19 +367,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     }
                 }
             }
         },
-        "/products/{id}": {
+        "/api/v1/products/{id}": {
             "get": {
                 "description": "Get product detail with category",
                 "produces": [
@@ -353,13 +404,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.JSONResponse"
+                                    "$ref": "#/definitions/util.JSONResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.ProductResp"
+                                            "$ref": "#/definitions/util.ProductResp"
                                         }
                                     }
                                 }
@@ -369,13 +420,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     }
                 }
@@ -406,7 +457,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/model.Product"
+                            "$ref": "#/definitions/models.Product"
                         }
                     }
                 ],
@@ -416,13 +467,13 @@
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/handler.JSONResponse"
+                                    "$ref": "#/definitions/util.JSONResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.ProductResp"
+                                            "$ref": "#/definitions/util.ProductResp"
                                         }
                                     }
                                 }
@@ -432,13 +483,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     }
                 }
@@ -465,19 +516,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/handler.JSONResponse"
+                            "$ref": "#/definitions/util.JSONResponse"
                         }
                     }
                 }
@@ -485,9 +536,12 @@
         }
     },
     "definitions": {
-        "handler.Category": {
+        "models.Category": {
             "type": "object",
             "properties": {
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -496,20 +550,36 @@
                 }
             }
         },
-        "handler.JSONResponse": {
+        "models.CheckoutItem": {
             "type": "object",
             "properties": {
-                "data": {},
-                "message": {
-                    "type": "string"
+                "product_id": {
+                    "type": "integer"
+                },
+                "quantity": {
+                    "type": "integer"
                 }
             }
         },
-        "handler.ProductResp": {
+        "models.CheckoutRequest": {
             "type": "object",
             "properties": {
-                "category": {
-                    "$ref": "#/definitions/handler.Category"
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.CheckoutItem"
+                    }
+                }
+            }
+        },
+        "models.Product": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
+                "category_name": {
+                    "type": "string"
                 },
                 "id": {
                     "type": "integer"
@@ -525,12 +595,52 @@
                 }
             }
         },
-        "model.Category": {
+        "models.Transaction": {
             "type": "object",
             "properties": {
-                "description": {
+                "created_at": {
                     "type": "string"
                 },
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.TransactionDetail"
+                    }
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "total_amount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.TransactionDetail": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "product_id": {
+                    "type": "integer"
+                },
+                "product_name": {
+                    "type": "string"
+                },
+                "quantity": {
+                    "type": "integer"
+                },
+                "subtotal": {
+                    "type": "integer"
+                },
+                "transaction_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "util.Category": {
+            "type": "object",
+            "properties": {
                 "id": {
                     "type": "integer"
                 },
@@ -539,14 +649,20 @@
                 }
             }
         },
-        "model.Product": {
+        "util.JSONResponse": {
             "type": "object",
             "properties": {
-                "category_id": {
-                    "type": "integer"
-                },
-                "category_name": {
+                "data": {},
+                "message": {
                     "type": "string"
+                }
+            }
+        },
+        "util.ProductResp": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/util.Category"
                 },
                 "id": {
                     "type": "integer"

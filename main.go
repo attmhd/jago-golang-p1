@@ -39,6 +39,10 @@ func main() {
 	productService := service.NewProductService(*productRepo)
 	productHandler := handler.NewProductHandler(*productService)
 
+	transactionRepo := repository.NewTransactionRepository(db)
+	transactionService := service.NewTransactionService(*transactionRepo)
+	transactionHandler := handler.NewTransactionHandler(*transactionService)
+
 	// === Gin Router ===
 	router := gin.Default()
 
@@ -83,6 +87,11 @@ func main() {
 			product.POST("", productHandler.Create)
 			product.PUT("/:id", productHandler.Update)
 			product.DELETE("/:id", productHandler.Delete)
+		}
+
+		transaction := api.Group("/checkout")
+		{
+			transaction.POST("", transactionHandler.Checkout)
 		}
 	}
 

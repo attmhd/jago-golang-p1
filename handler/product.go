@@ -7,6 +7,7 @@ import (
 
 	model "simple-crud/models"
 	"simple-crud/service"
+	"simple-crud/util"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,36 +31,36 @@ func NewProductHandler(svc service.ProductService) *ProductHandler {
 // @Description Get list of products with category
 // @Tags products
 // @Produce json
-// @Success 200 {object} JSONResponse{data=[]ProductResp}
-// @Failure 500 {object} JSONResponse
-// @Router /products [get]
+// @Success 200 {object} util.JSONResponse{data=[]util.ProductResp}
+// @Failure 500 {object} util.JSONResponse
+// @Router /api/v1/products [get]
 func (h *ProductHandler) GetAll(c *gin.Context) {
 	name := c.Request.URL.Query().Get("name")
 	fmt.Println(name)
 	products, err := h.service.GetAll(name)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, JSONResponse{
+		c.JSON(http.StatusInternalServerError, util.JSONResponse{
 			Message: "Internal Server Error",
 			Data:    nil,
 		})
 		return
 	}
 
-	resp := make([]ProductResp, 0, len(products))
+	resp := make([]util.ProductResp, 0, len(products))
 	for _, p := range products {
-		resp = append(resp, ProductResp{
+		resp = append(resp, util.ProductResp{
 			ID:    p.ID,
 			Name:  p.Name,
 			Price: p.Price,
 			Stock: p.Stock,
-			Category: Category{
+			Category: util.Category{
 				ID:   p.CategoryID,
 				Name: p.CategoryName,
 			},
 		})
 	}
 
-	c.JSON(http.StatusOK, JSONResponse{
+	c.JSON(http.StatusOK, util.JSONResponse{
 		Message: "Success",
 		Data:    resp,
 	})
@@ -75,15 +76,15 @@ func (h *ProductHandler) GetAll(c *gin.Context) {
 // @Tags products
 // @Produce json
 // @Param id path int true "Product ID"
-// @Success 200 {object} JSONResponse{data=ProductResp}
-// @Failure 400 {object} JSONResponse
-// @Failure 404 {object} JSONResponse
-// @Router /products/{id} [get]
+// @Success 200 {object} util.JSONResponse{data=util.ProductResp}
+// @Failure 400 {object} util.JSONResponse
+// @Failure 404 {object} util.JSONResponse
+// @Router /api/v1/products/{id} [get]
 func (h *ProductHandler) GetById(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: "invalid id",
 			Data:    nil,
 		})
@@ -92,25 +93,25 @@ func (h *ProductHandler) GetById(c *gin.Context) {
 
 	product, err := h.service.GetByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, JSONResponse{
+		c.JSON(http.StatusNotFound, util.JSONResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
 		return
 	}
 
-	resp := ProductResp{
+	resp := util.ProductResp{
 		ID:    product.ID,
 		Name:  product.Name,
 		Price: product.Price,
 		Stock: product.Stock,
-		Category: Category{
+		Category: util.Category{
 			ID:   product.CategoryID,
 			Name: product.CategoryName,
 		},
 	}
 
-	c.JSON(http.StatusOK, JSONResponse{
+	c.JSON(http.StatusOK, util.JSONResponse{
 		Message: "Success",
 		Data:    resp,
 	})
@@ -127,14 +128,14 @@ func (h *ProductHandler) GetById(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param product body model.Product true "Product payload"
-// @Success 201 {object} JSONResponse{data=ProductResp}
-// @Failure 400 {object} JSONResponse
-// @Failure 500 {object} JSONResponse
-// @Router /products [post]
+// @Success 201 {object} util.JSONResponse{data=util.ProductResp}
+// @Failure 400 {object} util.JSONResponse
+// @Failure 500 {object} util.JSONResponse
+// @Router /api/v1/products [post]
 func (h *ProductHandler) Create(c *gin.Context) {
 	var payload model.Product
 	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: "Invalid payload",
 			Data:    nil,
 		})
@@ -143,25 +144,25 @@ func (h *ProductHandler) Create(c *gin.Context) {
 
 	product, err := h.service.Create(&payload)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, JSONResponse{
+		c.JSON(http.StatusInternalServerError, util.JSONResponse{
 			Message: "Failed to create product",
 			Data:    nil,
 		})
 		return
 	}
 
-	resp := ProductResp{
+	resp := util.ProductResp{
 		ID:    product.ID,
 		Name:  product.Name,
 		Price: product.Price,
 		Stock: product.Stock,
-		Category: Category{
+		Category: util.Category{
 			ID:   product.CategoryID,
 			Name: product.CategoryName,
 		},
 	}
 
-	c.JSON(http.StatusCreated, JSONResponse{
+	c.JSON(http.StatusCreated, util.JSONResponse{
 		Message: "Product created successfully",
 		Data:    resp,
 	})
@@ -179,15 +180,15 @@ func (h *ProductHandler) Create(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Product ID"
 // @Param product body model.Product true "Product payload"
-// @Success 200 {object} JSONResponse{data=ProductResp}
-// @Failure 400 {object} JSONResponse
-// @Failure 500 {object} JSONResponse
-// @Router /products/{id} [put]
+// @Success 200 {object} util.JSONResponse{data=util.ProductResp}
+// @Failure 400 {object} util.JSONResponse
+// @Failure 500 {object} util.JSONResponse
+// @Router /api/v1/products/{id} [put]
 func (h *ProductHandler) Update(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: "invalid id",
 			Data:    nil,
 		})
@@ -196,7 +197,7 @@ func (h *ProductHandler) Update(c *gin.Context) {
 
 	var payload model.Product
 	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: "Invalid payload",
 			Data:    nil,
 		})
@@ -207,25 +208,25 @@ func (h *ProductHandler) Update(c *gin.Context) {
 
 	product, err := h.service.Update(&payload)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, JSONResponse{
+		c.JSON(http.StatusInternalServerError, util.JSONResponse{
 			Message: "Failed to update product",
 			Data:    nil,
 		})
 		return
 	}
 
-	resp := ProductResp{
+	resp := util.ProductResp{
 		ID:    product.ID,
 		Name:  product.Name,
 		Price: product.Price,
 		Stock: product.Stock,
-		Category: Category{
+		Category: util.Category{
 			ID:   product.CategoryID,
 			Name: product.CategoryName,
 		},
 	}
 
-	c.JSON(http.StatusOK, JSONResponse{
+	c.JSON(http.StatusOK, util.JSONResponse{
 		Message: "Product updated successfully",
 		Data:    resp,
 	})
@@ -241,15 +242,15 @@ func (h *ProductHandler) Update(c *gin.Context) {
 // @Tags products
 // @Produce json
 // @Param id path int true "Product ID"
-// @Success 200 {object} JSONResponse
-// @Failure 400 {object} JSONResponse
-// @Failure 404 {object} JSONResponse
-// @Router /products/{id} [delete]
+// @Success 200 {object} util.JSONResponse
+// @Failure 400 {object} util.JSONResponse
+// @Failure 404 {object} util.JSONResponse
+// @Router /api/v1/products/{id} [delete]
 func (h *ProductHandler) Delete(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
-		c.JSON(http.StatusBadRequest, JSONResponse{
+		c.JSON(http.StatusBadRequest, util.JSONResponse{
 			Message: "invalid id",
 			Data:    nil,
 		})
@@ -258,14 +259,14 @@ func (h *ProductHandler) Delete(c *gin.Context) {
 
 	err = h.service.Delete(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, JSONResponse{
+		c.JSON(http.StatusNotFound, util.JSONResponse{
 			Message: err.Error(),
 			Data:    nil,
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, JSONResponse{
+	c.JSON(http.StatusOK, util.JSONResponse{
 		Message: "Product deleted successfully",
 		Data:    nil,
 	})

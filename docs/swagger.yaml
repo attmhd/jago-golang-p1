@@ -1,32 +1,6 @@
 basePath: /
 definitions:
-  handler.Category:
-    properties:
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  handler.JSONResponse:
-    properties:
-      data: {}
-      message:
-        type: string
-    type: object
-  handler.ProductResp:
-    properties:
-      category:
-        $ref: '#/definitions/handler.Category'
-      id:
-        type: integer
-      name:
-        type: string
-      price:
-        type: number
-      stock:
-        type: integer
-    type: object
-  model.Category:
+  models.Category:
     properties:
       description:
         type: string
@@ -35,7 +9,21 @@ definitions:
       name:
         type: string
     type: object
-  model.Product:
+  models.CheckoutItem:
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  models.CheckoutRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/models.CheckoutItem'
+        type: array
+    type: object
+  models.Product:
     properties:
       category_id:
         type: integer
@@ -50,14 +38,67 @@ definitions:
       stock:
         type: integer
     type: object
-host: localhost:8080
+  models.Transaction:
+    properties:
+      created_at:
+        type: string
+      details:
+        items:
+          $ref: '#/definitions/models.TransactionDetail'
+        type: array
+      id:
+        type: integer
+      total_amount:
+        type: integer
+    type: object
+  models.TransactionDetail:
+    properties:
+      id:
+        type: integer
+      product_id:
+        type: integer
+      product_name:
+        type: string
+      quantity:
+        type: integer
+      subtotal:
+        type: integer
+      transaction_id:
+        type: integer
+    type: object
+  util.Category:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  util.JSONResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
+  util.ProductResp:
+    properties:
+      category:
+        $ref: '#/definitions/util.Category'
+      id:
+        type: integer
+      name:
+        type: string
+      price:
+        type: number
+      stock:
+        type: integer
+    type: object
 info:
   contact: {}
   description: REST API for product and category
   title: Simple CRUD API
   version: "1.0"
 paths:
-  /categories:
+  /api/v1/categories:
     get:
       description: Retrieve all categories
       produces:
@@ -67,17 +108,17 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/handler.JSONResponse'
+            - $ref: '#/definitions/util.JSONResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/model.Category'
+                    $ref: '#/definitions/models.Category'
                   type: array
               type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
       summary: Get all categories
       tags:
       - categories
@@ -91,7 +132,7 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/model.Category'
+          $ref: '#/definitions/models.Category'
       produces:
       - application/json
       responses:
@@ -99,19 +140,19 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/handler.JSONResponse'
+            - $ref: '#/definitions/util.JSONResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/model.Category'
+                  $ref: '#/definitions/models.Category'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
       summary: Create new category
       tags:
       - categories
-  /categories/{id}:
+  /api/v1/categories/{id}:
     delete:
       description: Delete category by ID
       parameters:
@@ -126,11 +167,11 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
       summary: Delete category
       tags:
       - categories
@@ -149,19 +190,19 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/handler.JSONResponse'
+            - $ref: '#/definitions/util.JSONResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/model.Category'
+                  $ref: '#/definitions/models.Category'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
       summary: Get category by ID
       tags:
       - categories
@@ -180,22 +221,56 @@ paths:
         name: category
         required: true
         schema:
-          $ref: '#/definitions/model.Category'
+          $ref: '#/definitions/models.Category'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
       summary: Update category
       tags:
       - categories
-  /products:
+  /api/v1/checkout:
+    post:
+      consumes:
+      - application/json
+      description: Create transaction from cart items and update product stock
+      parameters:
+      - description: Checkout payload
+        in: body
+        name: checkout
+        required: true
+        schema:
+          $ref: '#/definitions/models.CheckoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Transaction'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Checkout transaction
+      tags:
+      - transactions
+  /api/v1/products:
     get:
       description: Get list of products with category
       produces:
@@ -205,17 +280,17 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/handler.JSONResponse'
+            - $ref: '#/definitions/util.JSONResponse'
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/handler.ProductResp'
+                    $ref: '#/definitions/util.ProductResp'
                   type: array
               type: object
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
       summary: Get all products
       tags:
       - products
@@ -229,7 +304,7 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/model.Product'
+          $ref: '#/definitions/models.Product'
       produces:
       - application/json
       responses:
@@ -237,23 +312,23 @@ paths:
           description: Created
           schema:
             allOf:
-            - $ref: '#/definitions/handler.JSONResponse'
+            - $ref: '#/definitions/util.JSONResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.ProductResp'
+                  $ref: '#/definitions/util.ProductResp'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
       summary: Create product
       tags:
       - products
-  /products/{id}:
+  /api/v1/products/{id}:
     delete:
       description: Delete product by ID
       parameters:
@@ -268,15 +343,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
       summary: Delete product
       tags:
       - products
@@ -295,19 +370,19 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/handler.JSONResponse'
+            - $ref: '#/definitions/util.JSONResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.ProductResp'
+                  $ref: '#/definitions/util.ProductResp'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
       summary: Get product by ID
       tags:
       - products
@@ -326,7 +401,7 @@ paths:
         name: product
         required: true
         schema:
-          $ref: '#/definitions/model.Product'
+          $ref: '#/definitions/models.Product'
       produces:
       - application/json
       responses:
@@ -334,19 +409,19 @@ paths:
           description: OK
           schema:
             allOf:
-            - $ref: '#/definitions/handler.JSONResponse'
+            - $ref: '#/definitions/util.JSONResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.ProductResp'
+                  $ref: '#/definitions/util.ProductResp'
               type: object
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.JSONResponse'
+            $ref: '#/definitions/util.JSONResponse'
       summary: Update product
       tags:
       - products

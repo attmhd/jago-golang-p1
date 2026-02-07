@@ -1,4 +1,4 @@
-package handler
+package util
 
 type JSONResponse struct {
 	Message string `json:"message"`
