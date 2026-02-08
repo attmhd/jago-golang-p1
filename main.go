@@ -89,10 +89,14 @@ func main() {
 			product.DELETE("/:id", productHandler.Delete)
 		}
 
-		transaction := api.Group("/checkout")
+		api.POST("/checkout", transactionHandler.Checkout)
+
+		report := api.Group("/report")
 		{
-			transaction.POST("", transactionHandler.Checkout)
+			report.GET("/hari-ini", transactionHandler.GetSalesSummary)
+			report.GET("", transactionHandler.GetSalesSummary)
 		}
+
 	}
 
 	log.Println("Server running on port", cfg.Port)

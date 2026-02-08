@@ -8,3 +8,9 @@ type Product struct {
 	Price        float64 `json:"price"`
 	Stock        int     `json:"stock"`
 }
+
+// Model untuk menampilkan produk terlaris dengan jumlah terjual
+type TopSellingProduct struct {
+	Name    string `json:"name"`
+	QtySold int    `json:"qty_sold"`
+}

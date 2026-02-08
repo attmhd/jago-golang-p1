@@ -17,3 +17,14 @@ type ProductResp struct {
 	Stock    int      `json:"stock"`
 	Category Category `json:"category"`
 }
+
+type SalesSummary struct {
+	TotalRevenue   int            `json:"total_revenue"`
+	TotalTransaksi int            `json:"total_transaksi"`
+	ProdukTerlaris ProdukTerlaris `json:"produk_terlaris"`
+}
+
+type ProdukTerlaris struct {
+	Nama       string `json:"nama"`
+	QtyTerjual int    `json:"qty_terjual"`
+}
